@@ -1,36 +1,30 @@
-import React from 'react';
-import { Bell, Search } from 'lucide-react';
+import { type FC } from 'react';
+import { AlertCircle } from 'lucide-react';
 
-interface HeaderProps {
-  onSearch: (term: string) => void;
-}
-
-export function Header({ onSearch }: HeaderProps) {
+export const Header: FC = () => {
   return (
-    <header className="bg-purple-700 text-white sticky top-0 z-10 shadow-lg">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Bell className="h-7 w-7" />
-            <h1 className="text-2xl font-bold">Cultura Alerta</h1>
+    <header className="bg-white shadow">
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Cultura Alerta</h1>
+            <p className="mt-1 text-gray-600">
+              Encontre editais e oportunidades para projetos culturais
+            </p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <input
-                type="search"
-                placeholder="Buscar editais..."
-                onChange={(e) => onSearch(e.target.value)}
-                className="w-64 px-4 py-2 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-shadow"
-              />
-              <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
-            <button className="bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded-full transition-colors duration-200 flex items-center space-x-2">
-              <Bell className="h-4 w-4" />
-              <span>Criar Alerta</span>
-            </button>
+          <div className="mt-4 md:mt-0">
+            <a
+              href="https://github.com/levisilvino/PsiGabriel"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
+            >
+              <AlertCircle className="h-4 w-4 mr-1" />
+              Sobre o projeto
+            </a>
           </div>
         </div>
       </div>
     </header>
   );
-}
+};

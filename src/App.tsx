@@ -1,145 +1,97 @@
-import React, { useState, useMemo } from 'react';
+import { type FC, useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { FilterBar } from './components/FilterBar';
 import { EditalList } from './components/EditalList';
 import { EditalPreview } from './components/EditalPreview';
+import { SourceManager } from './components/SourceManager';
+import { Settings } from 'lucide-react';
+import { Edital, EditalFilters } from './types';
 
-// Mock data for demonstration
-const mockEditais = [
-  {
-    id: 1,
-    nome: "Prêmio Nacional das Artes 2024",
-    link: "https://example.com/edital1",
-    dataPublicacao: new Date("2024-03-01"),
-    dataVencimento: new Date("2024-04-30"),
-    categoria: "Artes Visuais",
-    descricao: `O Prêmio Nacional das Artes 2024 tem como objetivo reconhecer e premiar artistas visuais que contribuem para o desenvolvimento e inovação das artes no Brasil.
+const App: FC = () => {
+  const [editais, setEditais] = useState<Edital[]>([]);
+  const [selectedEdital, setSelectedEdital] = useState<Edital | null>(null);
+  const [showSourceManager, setShowSourceManager] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<EditalFilters>({
+    search: '',
+    categoria: '',
+    dataInicio: '',
+    dataFim: ''
+  });
 
-    Categorias de Premiação:
-    - Pintura
-    - Escultura
-    - Fotografia
-    - Arte Digital
-    
-    Valor do Prêmio:
-    - 1º lugar: R$ 50.000,00
-    - 2º lugar: R$ 30.000,00
-    - 3º lugar: R$ 20.000,00
-    
-    Requisitos:
-    - Ser artista brasileiro ou naturalizado
-    - Ter mais de 18 anos
-    - Apresentar portfólio com até 10 obras
-    - Obras devem ter sido produzidas nos últimos 2 anos`
-  },
-  {
-    id: 2,
-    nome: "Festival de Música Independente",
-    link: "https://example.com/edital2",
-    dataPublicacao: new Date("2024-03-05"),
-    dataVencimento: new Date("2024-05-15"),
-    categoria: "Música",
-    descricao: `O Festival de Música Independente é uma iniciativa que visa dar visibilidade e suporte a artistas independentes do cenário musical brasileiro.
+  useEffect(() => {
+    fetchEditais();
+  }, [filters]);
 
-    Modalidades:
-    - Shows ao vivo
-    - Gravação de EP
-    - Videoclipe
-    
-    Benefícios:
-    - Gravação profissional
-    - Distribuição digital
-    - Mentoria com profissionais do mercado
-    
-    Critérios de Seleção:
-    - Originalidade
-    - Qualidade técnica
-    - Potencial de mercado
-    - Diversidade musical`
-  },
-  {
-    id: 3,
-    nome: "Edital de Fomento ao Teatro",
-    link: "https://example.com/edital3",
-    dataPublicacao: new Date("2024-03-10"),
-    dataVencimento: new Date("2024-06-01"),
-    categoria: "Teatro",
-    descricao: `O Edital de Fomento ao Teatro visa apoiar a produção teatral brasileira, com foco em montagens inéditas e circulação de espetáculos.
+  const fetchEditais = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filters.categoria) params.append('categoria', filters.categoria);
+      if (filters.search) params.append('search', filters.search);
+      if (filters.dataInicio) params.append('data_inicio', filters.dataInicio);
+      if (filters.dataFim) params.append('data_fim', filters.dataFim);
 
-    Linhas de Apoio:
-    - Montagem de espetáculos
-    - Circulação de obras
-    - Pesquisa e desenvolvimento
-    
-    Valor do Apoio:
-    - Até R$ 100.000,00 por projeto
-    
-    Contrapartidas:
-    - Apresentações gratuitas
-    - Oficinas em escolas públicas
-    - Documentação do processo
-    
-    Público-alvo:
-    - Companhias de teatro
-    - Grupos independentes
-    - Artistas solo`
-  }
-];
-
-export default function App() {
-  const [selectedEdital, setSelectedEdital] = useState(mockEditais[0]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoria, setSelectedCategoria] = useState('');
-  const [selectedPrazo, setSelectedPrazo] = useState('');
-
-  const filteredEditais = useMemo(() => {
-    return mockEditais.filter(edital => {
-      const matchesSearch = edital.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          edital.descricao.toLowerCase().includes(searchTerm.toLowerCase());
+      const response = await fetch(`/api/editais?${params.toString()}`);
+      if (!response.ok) throw new Error('Falha ao carregar editais');
       
-      const matchesCategoria = !selectedCategoria || edital.categoria === selectedCategoria;
-      
-      const matchesPrazo = () => {
-        if (!selectedPrazo) return true;
-        const hoje = new Date();
-        const diasAteVencimento = Math.ceil((edital.dataVencimento.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-        
-        switch (selectedPrazo) {
-          case '7': return diasAteVencimento <= 7;
-          case '15': return diasAteVencimento <= 15;
-          case '30': return diasAteVencimento <= 30;
-          default: return true;
-        }
-      };
-
-      return matchesSearch && matchesCategoria && matchesPrazo();
-    });
-  }, [searchTerm, selectedCategoria, selectedPrazo]);
+      const data = await response.json();
+      setEditais(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar editais');
+      setEditais([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header onSearch={setSearchTerm} />
-      <FilterBar
-        onCategoriaChange={setSelectedCategoria}
-        onPrazoChange={setSelectedPrazo}
-        selectedCategoria={selectedCategoria}
-        selectedPrazo={selectedPrazo}
-      />
+    <div className="min-h-screen bg-gray-100">
+      <Header />
       
-      <main className="container mx-auto px-4 py-4">
-        <div className="grid grid-cols-12 gap-4 bg-white rounded-lg shadow-sm">
-          <div className="col-span-4 border-r">
-            <EditalList
-              editais={filteredEditais}
-              selectedEditalId={selectedEdital?.id}
-              onSelectEdital={setSelectedEdital}
-            />
-          </div>
-          <div className="col-span-8">
-            <EditalPreview edital={selectedEdital} />
-          </div>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-between items-center mb-6">
+          <FilterBar filters={filters} onFilterChange={setFilters} />
+          <button
+            onClick={() => setShowSourceManager(!showSourceManager)}
+            className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <Settings className="h-5 w-5 mr-2" />
+            Gerenciar Fontes
+          </button>
         </div>
-      </main>
+
+        {showSourceManager ? (
+          <SourceManager />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {loading ? (
+              <div className="col-span-3 flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+              </div>
+            ) : error ? (
+              <div className="col-span-3 text-center text-red-600">{error}</div>
+            ) : (
+              <>
+                <div className="lg:col-span-1">
+                  <EditalList
+                    editais={editais}
+                    selectedEdital={selectedEdital}
+                    onSelectEdital={setSelectedEdital}
+                  />
+                </div>
+                <div className="lg:col-span-2">
+                  {selectedEdital && <EditalPreview edital={selectedEdital} />}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+};
+
+export default App;

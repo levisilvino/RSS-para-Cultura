@@ -1,68 +1,125 @@
-import React from 'react';
+import { type FC, useEffect, useState } from 'react';
 import { Filter, X } from 'lucide-react';
+import { EditalFilters } from '../types';
+import { getCategorias } from '../services/api';
 
 interface FilterBarProps {
-  onCategoriaChange: (categoria: string) => void;
-  onPrazoChange: (prazo: string) => void;
-  selectedCategoria: string;
-  selectedPrazo: string;
+  filters: EditalFilters;
+  onFilterChange: (filters: EditalFilters) => void;
 }
 
-export function FilterBar({
-  onCategoriaChange,
-  onPrazoChange,
-  selectedCategoria,
-  selectedPrazo
-}: FilterBarProps) {
-  const hasFilters = selectedCategoria || selectedPrazo;
+export const FilterBar: FC<FilterBarProps> = ({ filters, onFilterChange }) => {
+  const [categorias, setCategorias] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchCategorias();
+  }, []);
+
+  const fetchCategorias = async () => {
+    try {
+      const data = await getCategorias();
+      setCategorias(data);
+    } catch (err) {
+      console.error('Erro ao carregar categorias:', err);
+    }
+  };
+
+  const handleChange = (field: keyof EditalFilters, value: string) => {
+    onFilterChange({
+      ...filters,
+      [field]: value
+    });
+  };
+
+  const clearFilters = () => {
+    onFilterChange({
+      search: '',
+      categoria: '',
+      dataInicio: '',
+      dataFim: ''
+    });
+  };
+
+  const hasActiveFilters = Object.values(filters).some(value => value !== '');
 
   return (
-    <div className="bg-white shadow-sm sticky top-16 z-10">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center text-gray-600">
-            <Filter className="h-4 w-4 mr-2" />
-            <span className="text-sm font-medium">Filtros:</span>
-          </div>
-          
+    <div className="bg-white shadow-sm rounded-lg p-4 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-medium text-gray-900 flex items-center">
+          <Filter className="h-5 w-5 mr-2" />
+          Filtros
+        </h3>
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Limpar filtros
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+            Pesquisar
+          </label>
+          <input
+            type="text"
+            id="search"
+            value={filters.search}
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+            placeholder="Buscar editais..."
+            onChange={(e) => handleChange('search', e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="categoria" className="block text-sm font-medium text-gray-700 mb-1">
+            Categoria
+          </label>
           <select
-            value={selectedCategoria}
-            onChange={(e) => onCategoriaChange(e.target.value)}
-            className="bg-white border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 transition-shadow cursor-pointer"
+            id="categoria"
+            value={filters.categoria}
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+            onChange={(e) => handleChange('categoria', e.target.value)}
           >
             <option value="">Todas as categorias</option>
-            <option value="Música">Música</option>
-            <option value="Teatro">Teatro</option>
-            <option value="Dança">Dança</option>
-            <option value="Artes Visuais">Artes Visuais</option>
-            <option value="Literatura">Literatura</option>
+            {categorias.map((categoria) => (
+              <option key={categoria} value={categoria}>
+                {categoria}
+              </option>
+            ))}
           </select>
-          
-          <select
-            value={selectedPrazo}
-            onChange={(e) => onPrazoChange(e.target.value)}
-            className="bg-white border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 transition-shadow cursor-pointer"
-          >
-            <option value="">Todos os prazos</option>
-            <option value="7">Próximos 7 dias</option>
-            <option value="15">Próximos 15 dias</option>
-            <option value="30">Próximos 30 dias</option>
-          </select>
+        </div>
 
-          {hasFilters && (
-            <button
-              onClick={() => {
-                onCategoriaChange('');
-                onPrazoChange('');
-              }}
-              className="text-purple-600 hover:text-purple-500 font-medium text-sm flex items-center transition-colors"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Limpar filtros
-            </button>
-          )}
+        <div>
+          <label htmlFor="dataInicio" className="block text-sm font-medium text-gray-700 mb-1">
+            Data Início
+          </label>
+          <input
+            type="date"
+            id="dataInicio"
+            value={filters.dataInicio}
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+            onChange={(e) => handleChange('dataInicio', e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="dataFim" className="block text-sm font-medium text-gray-700 mb-1">
+            Data Fim
+          </label>
+          <input
+            type="date"
+            id="dataFim"
+            value={filters.dataFim}
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+            onChange={(e) => handleChange('dataFim', e.target.value)}
+          />
         </div>
       </div>
     </div>
   );
-}
+};

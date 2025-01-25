@@ -1,12 +1,12 @@
-import React from 'react';
-import { Calendar, ExternalLink, Clock } from 'lucide-react';
-import { Edital } from '../types/edital';
+import { type FC } from 'react';
+import { Calendar, ExternalLink, Clock, Building2 } from 'lucide-react';
+import { Edital } from '../types';
 
 interface EditalPreviewProps {
   edital: Edital | null;
 }
 
-export function EditalPreview({ edital }: EditalPreviewProps) {
+export const EditalPreview: FC<EditalPreviewProps> = ({ edital }) => {
   if (!edital) {
     return (
       <div className="h-[calc(100vh-8rem)] flex items-center justify-center bg-gray-50 text-gray-500">
@@ -18,26 +18,41 @@ export function EditalPreview({ edital }: EditalPreviewProps) {
     );
   }
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('pt-BR');
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return 'Não informado';
+    return new Date(dateStr).toLocaleDateString('pt-BR');
   };
 
-  const getDaysUntilDeadline = (date: Date) => {
+  const getDaysUntilDeadline = (dateStr: string | null) => {
+    if (!dateStr) return null;
     const today = new Date();
-    const deadline = new Date(date);
+    const deadline = new Date(dateStr);
     const diffTime = deadline.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
 
-  const daysLeft = getDaysUntilDeadline(edital.dataVencimento);
-  const isUrgent = daysLeft <= 7;
+  const daysLeft = edital.data_vencimento ? getDaysUntilDeadline(edital.data_vencimento) : null;
+  const isUrgent = daysLeft !== null && daysLeft <= 7;
 
   return (
     <div className="h-[calc(100vh-8rem)] overflow-y-auto bg-white p-8">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-start mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{edital.nome}</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">{edital.nome}</h2>
+            <div className="flex flex-wrap gap-2">
+              {edital.categoria && (
+                <span className="inline-block bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full">
+                  {edital.categoria}
+                </span>
+              )}
+              <span className="inline-block bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full flex items-center">
+                <Building2 className="h-4 w-4 mr-1" />
+                {edital.fonte}
+              </span>
+            </div>
+          </div>
           <a
             href={edital.link}
             target="_blank"
@@ -49,42 +64,44 @@ export function EditalPreview({ edital }: EditalPreviewProps) {
           </a>
         </div>
 
-        <div className="bg-purple-50 rounded-lg p-6 mb-8">
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <div className="text-sm text-gray-500 mb-1">Categoria</div>
-              <div className="font-medium text-purple-800">{edital.categoria}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500 mb-1">Data de Publicação</div>
-              <div className="font-medium flex items-center">
-                <Calendar className="h-4 w-4 mr-2" />
-                {formatDate(edital.dataPublicacao)}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center text-gray-600">
+              <Calendar className="h-5 w-5 mr-2" />
+              <div>
+                <p className="text-sm font-medium">Data de Publicação</p>
+                <p className="text-lg">{formatDate(edital.data_publicacao)}</p>
               </div>
             </div>
-            <div>
-              <div className="text-sm text-gray-500 mb-1">Data de Vencimento</div>
-              <div className="font-medium flex items-center">
-                <Calendar className="h-4 w-4 mr-2" />
-                {formatDate(edital.dataVencimento)}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500 mb-1">Prazo Restante</div>
-              <div className={`font-medium flex items-center ${isUrgent ? 'text-red-600' : 'text-gray-900'}`}>
-                <Clock className="h-4 w-4 mr-2" />
-                {daysLeft} dias restantes
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center text-gray-600">
+              <Clock className="h-5 w-5 mr-2" />
+              <div>
+                <p className="text-sm font-medium">Data de Vencimento</p>
+                <p className="text-lg">
+                  {formatDate(edital.data_vencimento)}
+                  {daysLeft !== null && (
+                    <span className={`ml-2 text-sm ${isUrgent ? 'text-red-600' : 'text-gray-500'}`}>
+                      ({daysLeft} dias restantes)
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="prose max-w-none">
-          <div className="whitespace-pre-wrap text-gray-600 leading-relaxed">
-            {edital.descricao}
+        {edital.descricao && (
+          <div className="prose max-w-none">
+            <h3 className="text-lg font-semibold mb-4">Descrição do Edital</h3>
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <p className="whitespace-pre-line">{edital.descricao}</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
-}
+};
