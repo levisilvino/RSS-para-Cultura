@@ -1,10 +1,9 @@
 import { type FC, useState, useEffect } from 'react';
 import { Header } from './components/Header';
-import { FilterBar } from './components/FilterBar';
+import { FilterSection } from './components/FilterSection';
 import { EditalList } from './components/EditalList';
 import { EditalPreview } from './components/EditalPreview';
 import { SourceManager } from './components/SourceManager';
-import { Settings } from 'lucide-react';
 import { Edital, EditalFilters } from './types';
 
 const App: FC = () => {
@@ -52,16 +51,11 @@ const App: FC = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <FilterBar filters={filters} onFilterChange={setFilters} />
-          <button
-            onClick={() => setShowSourceManager(!showSourceManager)}
-            className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-          >
-            <Settings className="h-5 w-5 mr-2" />
-            Gerenciar Fontes
-          </button>
-        </div>
+        <FilterSection 
+          filters={filters}
+          onFilterChange={setFilters}
+          onSourceManagerClick={() => setShowSourceManager(!showSourceManager)}
+        />
 
         {showSourceManager ? (
           <SourceManager />

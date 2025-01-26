@@ -32,11 +32,14 @@ class Source(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     url = db.Column(db.String(512), nullable=False, unique=True)
-    type = db.Column(db.String(20), nullable=False)  # web, rss
+    type = db.Column(db.String(20), nullable=False)  # rss, webpage, api
     active = db.Column(db.Boolean, default=True)
     last_scrape = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Configurações extras em JSON
+    config = db.Column(db.JSON, default=dict)
     
     def to_dict(self):
         return {
@@ -47,5 +50,23 @@ class Source(db.Model):
             'active': self.active,
             'last_scrape': self.last_scrape.isoformat() if self.last_scrape else None,
             'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'updated_at': self.updated_at.isoformat(),
+            'config': self.config or {}
         }
+        
+    @classmethod
+    def create_source(cls, name, url, type='rss', config=None):
+        """Helper para criar uma nova fonte com configurações"""
+        source = cls(
+            name=name,
+            url=url,
+            type=type,
+            config=config or {}
+        )
+        db.session.add(source)
+        try:
+            db.session.commit()
+            return source
+        except Exception as e:
+            db.session.rollback()
+            raise e
